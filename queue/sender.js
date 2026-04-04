@@ -1,8 +1,8 @@
 const nodemailer = require("nodemailer");
 
-const HOURLY_LIMIT = 27;
-const PARALLEL = 2;
-const BASE_DELAY = 200;
+const HOURLY_LIMIT = 27;     // safe cap
+const PARALLEL = 3;          // thoda fast (2 → 3)
+const BASE_DELAY = 120;      // fast but not spammy
 
 const store = {};
 
@@ -30,9 +30,11 @@ function delay(ms) {
 module.exports = async (data) => {
   const { email, password, sender, subject, message, recipients } = data;
 
-  const list = recipients.split(/[\n,]+/).map(e => e.trim()).filter(Boolean);
+  const list = recipients
+    .split(/[\n,]+/)
+    .map(e => e.trim())
+    .filter(Boolean);
 
-  // 🔥 transporter check (WRONG PASSWORD HANDLE)
   let transporter;
 
   try {
@@ -41,32 +43,44 @@ module.exports = async (data) => {
       auth: { user: email, pass: password },
     });
 
-    await transporter.verify(); // 🔥 check login
+    await transporter.verify();
   } catch (err) {
     throw new Error("Wrong app password");
   }
 
   let sentCount = 0;
 
-  for (let i = 0; i < list.length; i++) {
+  // 🔥 parallel batches
+  for (let i = 0; i < list.length; i += PARALLEL) {
 
-    if (!canSend(email)) break;
+    const batch = list.slice(i, i + PARALLEL);
 
-    try {
-      await transporter.sendMail({
-        from: `"${sender}" <${email}>`,
-        to: list[i],
-        subject,
-        html: `<p>${message}</p>`,
-      });
+    const results = await Promise.allSettled(
+      batch.map(async (to) => {
 
-      sentCount++;
+        if (!canSend(email)) return;
 
-      await delay(BASE_DELAY + Math.random() * 500);
+        try {
+          await transporter.sendMail({
+            from: `"${sender}" <${email}>`,
+            to,
+            subject,
+            text: message, // 🔥 safer than html
+          });
 
-    } catch (e) {
-      // skip failed mail
-    }
+          return true;
+        } catch {
+          return false;
+        }
+      })
+    );
+
+    results.forEach(r => {
+      if (r.status === "fulfilled" && r.value) sentCount++;
+    });
+
+    // 🔥 smart delay (random)
+    await delay(BASE_DELAY + Math.random() * 300);
   }
 
   return sentCount;
