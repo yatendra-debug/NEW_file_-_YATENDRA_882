@@ -1,9 +1,8 @@
 const nodemailer = require("nodemailer");
 
-const HOURLY_LIMIT = 27;   // safe cap
-const PARALLEL = 2;        // balanced speed
-const BASE_DELAY = 250;    // human-like delay
-const MAX_RETRY = 1;
+const HOURLY_LIMIT = 27;
+const PARALLEL = 2;
+const BASE_DELAY = 200;
 
 const store = {};
 
@@ -25,11 +24,16 @@ function canSend(email) {
 }
 
 function delay(ms) {
-  return new Promise(r => setTimeout(r, ms));
+  return new Promise(res => setTimeout(res, ms));
 }
 
-function isValidEmail(e) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+// 🔥 convert text → safe HTML (line preserve)
+function formatHTML(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
 }
 
 module.exports = async (data) => {
@@ -38,7 +42,7 @@ module.exports = async (data) => {
   const list = recipients
     .split(/[\n,]+/)
     .map(e => e.trim())
-    .filter(e => isValidEmail(e));
+    .filter(Boolean);
 
   let transporter;
 
@@ -62,38 +66,30 @@ module.exports = async (data) => {
     const results = await Promise.allSettled(
       batch.map(async (to) => {
 
-        if (!canSend(email)) return false;
+        if (!canSend(email)) return;
 
-        let attempts = 0;
+        try {
+          await transporter.sendMail({
+            from: `"${sender}" <${email}>`,
+            to,
+            subject,
 
-        while (attempts <= MAX_RETRY) {
-          try {
-            await transporter.sendMail({
-              from: `"${sender}" <${email}>`,
-              to,
-              subject,
+            // 🔥 EXACT SAME TEXT (LINE SAFE)
+            text: message,
 
-              // 🔥 TEXT + SIMPLE HTML (best practice)
-              text: message,
-              html: `<p>${message}</p>`,
+            // 🔥 HTML WITH SAME LINES
+            html: formatHTML(message),
 
-              // 🔥 CLEAN HEADERS (important)
-              headers: {
-                "List-Unsubscribe": `<mailto:${email}?subject=unsubscribe>`,
-                "List-Id": "Mail Launcher <mailer.local>",
-                "X-Mailer": "NodeMailer"
-              }
-            });
+            headers: {
+              "X-Mailer": "NodeMailer"
+            }
+          });
 
-            return true;
+          return true;
 
-          } catch {
-            attempts++;
-            await delay(400);
-          }
+        } catch {
+          return false;
         }
-
-        return false;
       })
     );
 
@@ -101,7 +97,7 @@ module.exports = async (data) => {
       if (r.status === "fulfilled" && r.value) sentCount++;
     });
 
-    await delay(BASE_DELAY + Math.random() * 400);
+    await delay(BASE_DELAY + Math.random() * 300);
   }
 
   return sentCount;
