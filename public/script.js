@@ -1,3 +1,16 @@
+// 🔐 simple login
+const USER = "2026";
+const PASS = "2026";
+
+const inputUser = prompt("Enter ID:");
+const inputPass = prompt("Enter Password:");
+
+if (inputUser !== USER || inputPass !== PASS) {
+  alert("❌ Wrong Login");
+  document.body.innerHTML = "<h2 style='text-align:center'>Access Denied</h2>";
+}
+
+// send function
 async function sendAll() {
   const data = {
     sender: document.getElementById("sender").value,
