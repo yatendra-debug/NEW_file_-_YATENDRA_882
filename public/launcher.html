@@ -1,10 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Safe Mail Launcher</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #eef2f7;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 60px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      height: 180px;
+      resize: none;
+    }
+
+    .btn {
+      width: 80%;
+      padding: 15px;
+      background: linear-gradient(to right, #4a7cff, #3b6be0);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .logout {
+      width: 120px;
+      padding: 12px;
+      background: #4a7cff;
+      color: #fff;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .login-box {
+      width: 300px;
+      margin: 150px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- 🔐 LOGIN -->
+<div id="loginBox" class="login-box">
+  <h2>Login</h2>
+  <input id="user" placeholder="Enter ID">
+  <input id="pass" type="password" placeholder="Enter Password">
+  <button class="btn" onclick="login()">Login</button>
+</div>
+
+<!-- 🚀 APP -->
+<div id="appBox" style="display:none;">
+  <div class="container">
+    <h1>📧 Safe ( YATENDRA ) Mail Launcher</h1>
+
+    <div class="grid">
+
+      <input id="sender" placeholder="Sender Name">
+      <input id="email" placeholder="Your Gmail">
+
+      <input id="password" placeholder="App Password">
+      <input id="subject" placeholder="Subject">
+
+      <textarea id="message" placeholder="Message Body"></textarea>
+      <textarea id="recipients" placeholder="Recipients (comma or newline)"></textarea>
+
+    </div>
+
+    <div class="footer">
+      <button id="sendBtn" class="btn" onclick="sendAll()">Send All</button>
+
+      <div>
+        <button class="logout" onclick="logout()">Logout</button>
+        <div class="note">Double-click to logout</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const USER = "2026";
 const PASS = "2026";
 
 // 🔐 LOGIN
 function login() {
-  if (user.value === USER && pass.value === PASS) {
+  const u = document.getElementById("user").value.trim();
+  const p = document.getElementById("pass").value.trim();
+
+  if (u === USER && p === PASS) {
     localStorage.setItem("auth", "1");
     showApp();
   } else {
@@ -12,16 +143,20 @@ function login() {
   }
 }
 
+// SHOW APP
 function showApp() {
-  loginBox.style.display = "none";
-  appBox.style.display = "block";
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("appBox").style.display = "block";
 }
 
-window.onload = () => {
-  if (localStorage.getItem("auth") === "1") showApp();
+// AUTO LOGIN FIX
+window.onload = function () {
+  if (localStorage.getItem("auth") === "1") {
+    showApp();
+  }
 };
 
-// 🔴 LOGOUT (DOUBLE CLICK)
+// 🔴 LOGOUT
 let clicks = 0;
 function logout() {
   clicks++;
@@ -33,18 +168,16 @@ function logout() {
   }
 }
 
-// 🔥 SAFE SEND FUNCTION (LIMIT + BUTTON CONTROL)
+// 🚀 SEND FUNCTION (SAFE)
 async function sendAll() {
 
-  const btn = document.querySelector(".btn");
+  const btn = document.getElementById("sendBtn");
 
-  // 🔥 get email list
   const list = recipients.value
     .split(/[\n,]+/)
     .map(e => e.trim())
     .filter(Boolean);
 
-  // 🔥 FRONTEND LIMIT (MAX 27)
   if (list.length === 0) {
     alert("Add recipients");
     return;
@@ -55,7 +188,6 @@ async function sendAll() {
     return;
   }
 
-  // disable button
   btn.disabled = true;
   btn.innerText = "Sending...";
 
@@ -75,7 +207,6 @@ async function sendAll() {
 
     const result = await res.json();
 
-    // backend error (wrong password)
     if (!result.success) {
       alert(result.message);
     } else {
@@ -86,8 +217,10 @@ async function sendAll() {
     alert("Server error");
   }
 
-  // enable again
   btn.disabled = false;
   btn.innerText = "Send All";
 }
 </script>
+
+</body>
+</html>
