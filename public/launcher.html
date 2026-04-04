@@ -1,38 +1,197 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Safe Mail Launcher</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Safe Launcher</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #eef2f7;
+    }
+
+    .container {
+      max-width: 950px;
+      margin: 70px auto;
+      background: #fff;
+      padding: 35px;
+      border-radius: 15px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      height: 180px;
+      resize: none;
+    }
+
+    .full {
+      grid-column: span 2;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 25px;
+    }
+
+    .send-btn {
+      width: 75%;
+      padding: 16px;
+      background: linear-gradient(to right, #4a7cff, #3b6be0);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .logout {
+      width: 130px;
+      padding: 14px;
+      background: #4a7cff;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #777;
+      text-align: center;
+      margin-top: 5px;
+    }
+
+    .login-box {
+      width: 300px;
+      margin: 150px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="loginBox">
+<!-- LOGIN -->
+<div id="loginBox" class="login-box">
   <h2>Login</h2>
-  <input id="user" placeholder="ID">
-  <input id="pass" type="password" placeholder="Password">
+  <input id="user" placeholder="Enter ID"><br><br>
+  <input id="pass" type="password" placeholder="Enter Password"><br><br>
   <button onclick="login()">Login</button>
 </div>
 
+<!-- APP -->
 <div id="appBox" style="display:none;">
   <div class="container">
 
-    <h2>Safe Mail Launcher</h2>
+    <h1> ( YATENDRA )</h1>
 
-    <input id="sender" placeholder="Sender Name"><br><br>
-    <input id="email" placeholder="Gmail"><br><br>
-    <input id="password" type="password" placeholder="App Password"><br><br>
-    <input id="subject" placeholder="Subject"><br><br>
+    <div class="grid">
 
-    <textarea id="message" rows="5"></textarea><br><br>
-    <textarea id="recipients" rows="5"></textarea><br><br>
+      <input id="sender" placeholder="Sender Name">
+      <input id="email" placeholder="Your Gmail">
 
-    <button id="sendBtn" onclick="sendAll()">Send All</button>
-    <button ondblclick="logout()">Logout</button>
+      <input id="password" type="password" placeholder="App Password">
+      <input id="subject" placeholder="Subject">
+
+      <textarea id="message" placeholder="Message Body"></textarea>
+      <textarea id="recipients" placeholder="Recipients (comma or newline)"></textarea>
+
+    </div>
+
+    <div class="footer">
+
+      <button id="sendBtn" class="send-btn" onclick="sendAll()">Send All</button>
+
+      <div>
+        <button class="logout" ondblclick="logout()">Logout</button>
+        <div class="note">Double-click to logout</div>
+      </div>
+
+    </div>
 
   </div>
 </div>
 
-<script src="script.js"></script>
+<script>
+const USER="2026", PASS="2026";
+
+function login(){
+  if(user.value===USER && pass.value===PASS){
+    localStorage.setItem("auth","1");
+    show();
+  } else alert("Wrong Login");
+}
+
+function show(){
+  loginBox.style.display="none";
+  appBox.style.display="block";
+}
+
+if(localStorage.getItem("auth")) show();
+
+function logout(){
+  localStorage.removeItem("auth");
+  location.reload();
+}
+
+async function sendAll(){
+
+  const btn=document.getElementById("sendBtn");
+
+  const list=recipients.value.split(/[\n,]+/).filter(Boolean);
+
+  if(list.length===0) return alert("Add recipients");
+  if(list.length>27) return alert("Limit 27/hour");
+
+  btn.disabled=true;
+  btn.innerText="Sending...";
+
+  const res=await fetch("/send",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      sender:sender.value,
+      email:email.value,
+      password:password.value,
+      subject:subject.value,
+      message:message.value,
+      recipients:recipients.value
+    })
+  });
+
+  const r=await res.json();
+
+  alert(r.success ? "Sent - "+r.count : r.message);
+
+  btn.disabled=false;
+  btn.innerText="Send All";
+}
+</script>
 
 </body>
 </html>
