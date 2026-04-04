@@ -1,52 +1,14 @@
-body {
-  background: #eef2f7;
-  font-family: Arial;
-}
-
-.container {
-  max-width: 900px;
-  margin: 60px auto;
+.login-box {
+  max-width: 300px;
+  margin: 120px auto;
   background: #fff;
-  padding: 30px;
-  border-radius: 15px;
+  padding: 25px;
+  border-radius: 12px;
+  text-align: center;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-input, textarea {
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-}
-
-.full {
-  grid-column: span 2;
-  height: 150px;
-}
-
-.btn {
-  width: 80%;
-  padding: 15px;
-  background: blue;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-}
-
-.logout {
-  padding: 12px;
-  background: #4a7cff;
-  color: white;
-  border: none;
-  border-radius: 10px;
-}
-
-.footer {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
+.login-box input {
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
 }
