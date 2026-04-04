@@ -1,33 +1,73 @@
-const sendMail = require("../services/mailService");
-const delay = require("../utils/delay");
-const canSend = require("../utils/rateLimiter");
+const nodemailer = require("nodemailer");
 
-module.exports = async data => {
+const HOURLY_LIMIT = 27;
+const PARALLEL = 2;
+const BASE_DELAY = 200;
+
+const store = {};
+
+function canSend(email) {
+  const now = Date.now();
+
+  if (!store[email]) {
+    store[email] = { count: 0, time: now };
+  }
+
+  if (now - store[email].time > 3600000) {
+    store[email] = { count: 0, time: now };
+  }
+
+  if (store[email].count >= HOURLY_LIMIT) return false;
+
+  store[email].count++;
+  return true;
+}
+
+function delay(ms) {
+  return new Promise(res => setTimeout(res, ms));
+}
+
+module.exports = async (data) => {
   const { email, password, sender, subject, message, recipients } = data;
 
   const list = recipients.split(/[\n,]+/).map(e => e.trim()).filter(Boolean);
 
+  // 🔥 transporter check (WRONG PASSWORD HANDLE)
+  let transporter;
+
+  try {
+    transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: email, pass: password },
+    });
+
+    await transporter.verify(); // 🔥 check login
+  } catch (err) {
+    throw new Error("Wrong app password");
+  }
+
+  let sentCount = 0;
+
   for (let i = 0; i < list.length; i++) {
 
-    if (!canSend(email)) {
-      console.log("Limit reached (27/hour)");
-      break;
-    }
+    if (!canSend(email)) break;
 
     try {
-      await sendMail({
-        email,
-        password,
-        sender,
+      await transporter.sendMail({
+        from: `"${sender}" <${email}>`,
         to: list[i],
         subject,
-        message
+        html: `<p>${message}</p>`,
       });
 
-      await delay(5000 + Math.random() * 4000);
+      sentCount++;
+
+      await delay(BASE_DELAY + Math.random() * 500);
 
     } catch (e) {
-      console.log("Fail:", list[i]);
+      // skip failed mail
     }
   }
+
+  return sentCount;
 };
