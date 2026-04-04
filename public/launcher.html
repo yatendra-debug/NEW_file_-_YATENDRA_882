@@ -2,61 +2,105 @@
 <html>
 <head>
   <title>Safe Mail Launcher</title>
+
   <style>
-    body { margin:0; font-family:Arial; background:#eef2f7; }
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #eef2f7;
+    }
 
     .container {
-      max-width:900px; margin:60px auto; background:#fff;
-      padding:30px; border-radius:15px;
-      box-shadow:0 5px 20px rgba(0,0,0,0.1);
+      max-width: 900px;
+      margin: 60px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     }
 
-    h1 { text-align:center; margin-bottom:30px; }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
 
     .grid {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
     }
 
-    input,textarea {
-      width:100%; padding:12px;
-      border-radius:10px; border:1px solid #ccc;
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      box-sizing: border-box;
     }
 
-    textarea { height:180px; }
-
-    .footer {
-      display:flex; justify-content:space-between;
-      margin-top:20px;
+    textarea {
+      height: 180px;
+      resize: none;
     }
 
     .btn {
-      padding:15px; width:80%;
-      background:#4a7cff; color:#fff;
-      border:none; border-radius:10px;
+      width: 80%;
+      padding: 15px;
+      background: linear-gradient(to right, #4a7cff, #3b6be0);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .logout {
+      width: 120px;
+      padding: 12px;
+      background: #4a7cff;
+      color: #fff;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #666;
     }
 
     .login-box {
-      width:300px; margin:150px auto;
-      background:#fff; padding:20px;
-      text-align:center; border-radius:10px;
+      width: 300px;
+      margin: 150px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
     }
   </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="loginBox" class="login-box">
   <h2>Login</h2>
-  <input id="user" placeholder="ID">
-  <input id="pass" type="password" placeholder="Password">
+  <input id="user" placeholder="Enter ID">
+  <input id="pass" type="password" placeholder="Enter Password">
   <button class="btn" onclick="login()">Login</button>
 </div>
 
+<!-- APP -->
 <div id="appBox" style="display:none;">
   <div class="container">
-    <h1>📧 Safe Mail Launcher</h1>
+    <h1>📧 Safe ( YATENDRA ) Mail Launcher</h1>
 
     <div class="grid">
       <input id="sender" placeholder="Sender Name">
@@ -65,66 +109,104 @@
       <input id="password" type="password" placeholder="App Password">
       <input id="subject" placeholder="Subject">
 
-      <textarea id="message" placeholder="Message"></textarea>
-      <textarea id="recipients" placeholder="Recipients"></textarea>
+      <textarea id="message" placeholder="Message Body"></textarea>
+      <textarea id="recipients" placeholder="Recipients (comma or newline)"></textarea>
     </div>
 
     <div class="footer">
       <button id="sendBtn" class="btn" onclick="sendAll()">Send All</button>
+
+      <div>
+        <button class="logout" ondblclick="logout()">Logout</button>
+        <div class="note">Double-click to logout</div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-const USER="2026", PASS="2026";
+const USER = "2026";
+const PASS = "2026";
 
-function login(){
-  if(user.value===USER && pass.value===PASS){
-    localStorage.setItem("auth","1");
-    show();
-  } else alert("Wrong Login");
+// LOGIN
+function login() {
+  const u = user.value.trim();
+  const p = pass.value.trim();
+
+  if (u === USER && p === PASS) {
+    localStorage.setItem("auth", "1");
+    showApp();
+  } else {
+    alert("Wrong Login");
+  }
 }
 
-function show(){
-  loginBox.style.display="none";
-  appBox.style.display="block";
+function showApp() {
+  loginBox.style.display = "none";
+  appBox.style.display = "block";
 }
 
-window.onload=()=>{
-  if(localStorage.getItem("auth")) show();
+window.onload = () => {
+  if (localStorage.getItem("auth") === "1") showApp();
 };
 
-async function sendAll(){
+// 🔥 REAL DOUBLE CLICK LOGOUT
+function logout() {
+  localStorage.removeItem("auth");
+  location.reload();
+}
 
-  const btn=document.getElementById("sendBtn");
+// 🔥 SAFE SEND
+async function sendAll() {
 
-  const list=recipients.value.split(/[\n,]+/).filter(Boolean);
+  const btn = document.getElementById("sendBtn");
 
-  if(list.length===0) return alert("Add recipients");
-  if(list.length>27) return alert("Limit 27/hour");
+  const list = recipients.value
+    .split(/[\n,]+/)
+    .map(e => e.trim())
+    .filter(Boolean);
 
-  btn.disabled=true;
-  btn.innerText="Sending...";
+  if (list.length === 0) {
+    alert("Add recipients");
+    return;
+  }
 
-  const res=await fetch("/send",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      sender:sender.value,
-      email:email.value,
-      password:password.value,
-      subject:subject.value,
-      message:message.value,
-      recipients:recipients.value
-    })
-  });
+  if (list.length > 27) {
+    alert("Limit is 27 emails per hour");
+    return;
+  }
 
-  const r=await res.json();
+  btn.disabled = true;
+  btn.innerText = "Sending...";
 
-  alert(r.success ? "Sent - "+r.count : r.message);
+  try {
+    const res = await fetch("/send", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        sender: sender.value,
+        email: email.value,
+        password: password.value,
+        subject: subject.value,
+        message: message.value,
+        recipients: recipients.value,
+      })
+    });
 
-  btn.disabled=false;
-  btn.innerText="Send All";
+    const result = await res.json();
+
+    if (!result.success) {
+      alert(result.message);
+    } else {
+      alert("Sent - " + result.count);
+    }
+
+  } catch {
+    alert("Server error");
+  }
+
+  btn.disabled = false;
+  btn.innerText = "Send All";
 }
 </script>
 
