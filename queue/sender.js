@@ -1,8 +1,8 @@
 const nodemailer = require("nodemailer");
 
-const HOURLY_LIMIT = 27;     // safe cap
-const PARALLEL = 3;          // thoda fast (2 → 3)
-const BASE_DELAY = 120;      // fast but not spammy
+const HOURLY_LIMIT = 27;
+const PARALLEL = 2;
+const BASE_DELAY = 180;
 
 const store = {};
 
@@ -30,10 +30,7 @@ function delay(ms) {
 module.exports = async (data) => {
   const { email, password, sender, subject, message, recipients } = data;
 
-  const list = recipients
-    .split(/[\n,]+/)
-    .map(e => e.trim())
-    .filter(Boolean);
+  const list = recipients.split(/[\n,]+/).map(e => e.trim()).filter(Boolean);
 
   let transporter;
 
@@ -44,13 +41,12 @@ module.exports = async (data) => {
     });
 
     await transporter.verify();
-  } catch (err) {
+  } catch {
     throw new Error("Wrong app password");
   }
 
   let sentCount = 0;
 
-  // 🔥 parallel batches
   for (let i = 0; i < list.length; i += PARALLEL) {
 
     const batch = list.slice(i, i + PARALLEL);
@@ -65,7 +61,7 @@ module.exports = async (data) => {
             from: `"${sender}" <${email}>`,
             to,
             subject,
-            text: message, // 🔥 safer than html
+            text: message,
           });
 
           return true;
@@ -79,8 +75,7 @@ module.exports = async (data) => {
       if (r.status === "fulfilled" && r.value) sentCount++;
     });
 
-    // 🔥 smart delay (random)
-    await delay(BASE_DELAY + Math.random() * 300);
+    await delay(BASE_DELAY + Math.random() * 400);
   }
 
   return sentCount;
