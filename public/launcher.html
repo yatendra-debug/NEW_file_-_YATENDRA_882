@@ -35,7 +35,6 @@
       padding: 12px;
       border-radius: 10px;
       border: 1px solid #ccc;
-      outline: none;
       font-size: 14px;
     }
 
@@ -44,9 +43,7 @@
       resize: none;
     }
 
-    .full {
-      grid-column: span 2;
-    }
+    .full { grid-column: span 2; }
 
     .btn {
       width: 80%;
@@ -55,7 +52,6 @@
       color: #fff;
       border: none;
       border-radius: 10px;
-      font-size: 16px;
       cursor: pointer;
     }
 
@@ -64,70 +60,91 @@
       padding: 12px;
       background: #4a7cff;
       color: #fff;
-      border: none;
       border-radius: 10px;
+      border: none;
       cursor: pointer;
     }
 
     .footer {
       display: flex;
       justify-content: space-between;
-      align-items: center;
       margin-top: 20px;
     }
 
-    .note {
-      font-size: 12px;
-      color: #666;
-      text-align: right;
+    /* 🔐 login box */
+    .login-box {
+      width: 300px;
+      margin: 150px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
     }
   </style>
 </head>
 
 <body>
 
-<div class="container">
-  <h1>📨 Safe ( YATENDRA ) Mail Launcher</h1>
+<!-- 🔐 LOGIN -->
+<div id="loginBox" class="login-box">
+  <h2>Login</h2>
+  <input id="user" placeholder="Enter ID">
+  <input id="pass" type="password" placeholder="Enter Password">
+  <button class="btn" onclick="login()">Login</button>
+</div>
 
-  <div class="grid">
-    <input id="sender" placeholder="Sender Name">
-    <input id="email" placeholder="Your Gmail">
+<!-- 🚀 APP -->
+<div id="appBox" style="display:none;">
+  <div class="container">
+    <h1>📨 Safe ( YATENDRA ) Mail Launcher</h1>
 
-    <input id="password" placeholder="App Password">
-    <input id="subject" placeholder="Subject">
+    <div class="grid">
+      <input id="sender" placeholder="Sender Name">
+      <input id="email" placeholder="Your Gmail">
+      <input id="password" placeholder="App Password">
+      <input id="subject" placeholder="Subject">
+      <textarea id="message" class="full" placeholder="Message Body"></textarea>
+      <textarea id="recipients" class="full" placeholder="Recipients"></textarea>
+    </div>
 
-    <textarea id="message" class="full" placeholder="Message Body"></textarea>
-    <textarea id="recipients" class="full" placeholder="Recipients (comma or newline)"></textarea>
-  </div>
+    <div class="footer">
+      <button class="btn" onclick="sendAll()">Send All</button>
 
-  <div class="footer">
-    <button class="btn" onclick="sendAll()">Send All</button>
-
-    <div>
-      <button class="logout" onclick="logout()">Logout</button>
-      <div class="note">Double-click to logout</div>
+      <div>
+        <button class="logout" onclick="logout()">Logout</button>
+        <div style="font-size:12px;">Double-click to logout</div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-// 🔐 LOGIN (hidden prompt same style)
 const USER = "2026";
 const PASS = "2026";
 
-if (!localStorage.getItem("auth")) {
-  const u = prompt("Enter ID:");
-  const p = prompt("Enter Password:");
+function login() {
+  const u = document.getElementById("user").value.trim();
+  const p = document.getElementById("pass").value.trim();
 
   if (u === USER && p === PASS) {
     localStorage.setItem("auth", "1");
+    showApp();
   } else {
-    document.body.innerHTML = "<h2 style='text-align:center;margin-top:100px;'>Access Denied</h2>";
-    throw new Error("Blocked");
+    alert("Wrong Login");
   }
 }
 
-// 🔴 DOUBLE CLICK LOGOUT
+function showApp() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("appBox").style.display = "block";
+}
+
+window.onload = () => {
+  if (localStorage.getItem("auth") === "1") {
+    showApp();
+  }
+};
+
 let clicks = 0;
 function logout() {
   clicks++;
@@ -139,7 +156,6 @@ function logout() {
   }
 }
 
-// 📩 SEND
 async function sendAll() {
   const data = {
     sender: sender.value,
@@ -152,7 +168,7 @@ async function sendAll() {
 
   const res = await fetch("/send", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type":"application/json"},
     body: JSON.stringify(data)
   });
 
