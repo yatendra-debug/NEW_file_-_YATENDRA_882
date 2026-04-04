@@ -1,82 +1,89 @@
-import express from "express";
-import nodemailer from "nodemailer";
-import path from "path";
-import { fileURLToPath } from "url";
+const nodemailer = require("nodemailer");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const HOURLY_LIMIT = 27;
+const BATCH_SIZE = 3;
+const BATCH_DELAY = 300;
 
-const app = express();
+const store = {};
 
-/* 🔐 SECURITY */
-app.use(express.json({ limit: "40kb" }));
-app.disable("x-powered-by");
+function canSend(email) {
+  const now = Date.now();
 
-/* 📁 STATIC */
-app.use(express.static(path.join(__dirname, "public")));
+  if (!store[email]) {
+    store[email] = { count: 0, time: now };
+  }
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
-});
+  if (now - store[email].time > 3600000) {
+    store[email] = { count: 0, time: now };
+  }
 
-/* ⚖️ 🔥 SAFE LIMIT SETTINGS (UPDATED) */
-const HOURLY_LIMIT = 22;    // 🔥 safer than 25
-const PARALLEL = 2;         // balanced
-const DELAY_MS = 400;       // 🔥 slower = less spam
-const MAX_RETRY = 1;        // light retry
+  if (store[email].count >= HOURLY_LIMIT) return false;
 
-/* 📊 TRACK */
-let stats = {};
-setInterval(() => {
-  stats = {};
-}, 60 * 60 * 1000);
+  store[email].count++;
+  return true;
+}
 
-/* 🧹 CLEAN INPUT */
-const cleanText = t =>
-  (t || "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim()
-    .slice(0, 3000);
+function delay(ms) {
+  return new Promise(res => setTimeout(res, ms));
+}
 
-const cleanSubject = s =>
-  (s || "")
-    .replace(/\s+/g, " ")
-    .replace(/free|urgent|click|offer/gi, "") // 🔥 spam words remove
-    .trim()
-    .slice(0, 100);
+function isValidEmail(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
 
-const cleanName = n =>
-  (n || "")
-    .replace(/[<>"]/g, "")
-    .trim()
-    .slice(0, 50);
+module.exports = async (data) => {
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const { email, password, sender, subject, message, recipients } = data;
 
-/* 🚀 SAFE SENDING */
-async function sendSafely(transporter, mails) {
+  const list = recipients
+    .split(/[\n,]+/)
+    .map(e => e.trim())
+    .filter(e => isValidEmail(e));
+
+  let transporter;
+
+  try {
+    transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: email, pass: password }
+    });
+
+    await transporter.verify();
+  } catch {
+    throw new Error("Wrong app password");
+  }
+
   let sent = 0;
 
-  for (let i = 0; i < mails.length; i += PARALLEL) {
-    const batch = mails.slice(i, i + PARALLEL);
+  for (let i = 0; i < list.length; i += BATCH_SIZE) {
+
+    const batch = list.slice(i, i + BATCH_SIZE);
 
     const results = await Promise.allSettled(
-      batch.map(async (m) => {
+      batch.map(async (to) => {
 
-        let attempt = 0;
+        if (!canSend(email)) return false;
 
-        while (attempt <= MAX_RETRY) {
-          try {
-            await transporter.sendMail(m);
-            return true;
-          } catch {
-            attempt++;
-            await new Promise(r => setTimeout(r, 300));
-          }
+        try {
+          await transporter.sendMail({
+            from: `"${sender}" <${email}>`,
+            to,
+            subject,
+
+            // 🔥 SAME LINE FORMAT
+            text: message,
+
+            headers: {
+              "Reply-To": email,
+              "X-Mailer": "NodeMailer"
+            }
+          });
+
+          return true;
+
+        } catch {
+          return false;
         }
-
-        return false;
       })
     );
 
@@ -84,93 +91,8 @@ async function sendSafely(transporter, mails) {
       if (r.status === "fulfilled" && r.value) sent++;
     });
 
-    /* ⏱️ human delay */
-    await new Promise(r => setTimeout(r, DELAY_MS + Math.random() * 600));
+    await delay(BATCH_DELAY);
   }
 
   return sent;
-}
-
-/* 📩 SEND API */
-app.post("/send", async (req, res) => {
-  const { senderName, gmail, apppass, to, subject, message } = req.body;
-
-  /* ❌ VALIDATION */
-  if (!gmail || !apppass || !to || !subject || !message) {
-    return res.json({ success: false, msg: "Missing fields ❌" });
-  }
-
-  if (!emailRegex.test(gmail)) {
-    return res.json({ success: false, msg: "Invalid Gmail ❌" });
-  }
-
-  if (!stats[gmail]) stats[gmail] = { count: 0 };
-
-  if (stats[gmail].count >= HOURLY_LIMIT) {
-    return res.json({ success: false, msg: "Hourly limit reached ❌" });
-  }
-
-  /* 📬 CLEAN RECIPIENTS */
-  const recipients = to
-    .split(/,|\n/)
-    .map(r => r.trim())
-    .filter(r => emailRegex.test(r));
-
-  const remaining = HOURLY_LIMIT - stats[gmail].count;
-
-  if (recipients.length === 0) {
-    return res.json({ success: false, msg: "No valid recipients ❌" });
-  }
-
-  if (recipients.length > remaining) {
-    return res.json({ success: false, msg: "Limit full ❌" });
-  }
-
-  /* 📡 TRANSPORT */
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: gmail,
-      pass: apppass
-    }
-  });
-
-  try {
-    await transporter.verify();
-  } catch {
-    return res.json({ success: false, msg: "Wrong app password ❌" });
-  }
-
-  const safeName = cleanName(senderName) || gmail;
-
-  /* 📤 MAIL BUILD */
-  const mails = recipients.map(r => ({
-    from: `"${safeName}" <${gmail}>`,
-    to: r,
-    subject: cleanSubject(subject),
-
-    // 🔥 BEST FOR INBOX (PLAIN TEXT)
-    text: cleanText(message),
-
-    headers: {
-      "Reply-To": gmail,
-      "List-Unsubscribe": `<mailto:${gmail}?subject=unsubscribe>`,
-      "X-Mailer": "NodeMailer"
-    }
-  }));
-
-  /* 🚀 SEND */
-  const sent = await sendSafely(transporter, mails);
-
-  stats[gmail].count += sent;
-
-  return res.json({
-    success: true,
-    sent
-  });
-});
-
-/* 🟢 START */
-app.listen(process.env.PORT || 3000, () => {
-  console.log("✅ Ultra Safe Mail Server Running");
-});
+};
