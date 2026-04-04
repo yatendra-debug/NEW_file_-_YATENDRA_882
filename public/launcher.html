@@ -11,7 +11,7 @@
     }
 
     .container {
-      max-width: 950px;
+      max-width: 900px;
       margin: 60px auto;
       background: #fff;
       padding: 30px;
@@ -39,10 +39,14 @@
       box-sizing: border-box;
     }
 
-    /* 🔥 IMPORTANT FIX */
     textarea {
-      height: 170px;
+      height: 160px;
       resize: none;
+    }
+
+    /* 🔥 IMPORTANT (full width rows) */
+    .full {
+      grid-column: span 2;
     }
 
     .btn {
@@ -68,17 +72,16 @@
     .footer {
       display: flex;
       justify-content: space-between;
-      margin-top: 20px;
       align-items: center;
+      margin-top: 20px;
     }
 
     .note {
       font-size: 12px;
       color: #666;
-      text-align: right;
     }
 
-    /* 🔐 login */
+    /* login */
     .login-box {
       width: 300px;
       margin: 150px auto;
@@ -115,9 +118,11 @@
       <input id="password" placeholder="App Password">
       <input id="subject" placeholder="Subject">
 
-      <!-- 🔥 ROW 3 (PERFECT SIDE BY SIDE) -->
-      <textarea id="message" placeholder="Message Body"></textarea>
-      <textarea id="recipients" placeholder="Recipients (comma or newline)"></textarea>
+      <!-- 🔥 ROW 3 (FULL WIDTH) -->
+      <textarea id="message" class="full" placeholder="Message Body"></textarea>
+
+      <!-- 🔥 ROW 4 (FULL WIDTH) -->
+      <textarea id="recipients" class="full" placeholder="Recipients (comma or newline)"></textarea>
 
     </div>
 
