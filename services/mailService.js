@@ -1,7 +1,7 @@
-const createTransporter = require("../config/smtp");
+const createTransport = require("../config/smtp");
 
-async function sendMail({ email, password, sender, to, subject, message }) {
-  const transporter = createTransporter(email, password);
+module.exports = async ({ email, password, sender, to, subject, message }) => {
+  const transporter = createTransport(email, password);
 
   await transporter.sendMail({
     from: `"${sender}" <${email}>`,
@@ -10,7 +10,5 @@ async function sendMail({ email, password, sender, to, subject, message }) {
     html: `<p>${message}</p>`,
   });
 
-  console.log("✅ Sent:", to);
-}
-
-module.exports = sendMail;
+  console.log("Sent:", to);
+};
