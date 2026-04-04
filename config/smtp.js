@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-function createTransporter(email, password) {
+module.exports = (email, password) => {
   return nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -8,6 +8,4 @@ function createTransporter(email, password) {
       pass: password,
     },
   });
-}
-
-module.exports = createTransporter;
+};
