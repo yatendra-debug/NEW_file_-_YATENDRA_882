@@ -2,6 +2,7 @@
 const USER = "2026";
 const PASS = "2026";
 
+// 🔐 LOGIN
 function login() {
   if (user.value === USER && pass.value === PASS) {
     localStorage.setItem("auth", "1");
@@ -20,6 +21,7 @@ window.onload = () => {
   if (localStorage.getItem("auth") === "1") showApp();
 };
 
+// 🔴 LOGOUT (DOUBLE CLICK)
 let clicks = 0;
 function logout() {
   clicks++;
@@ -31,10 +33,27 @@ function logout() {
   }
 }
 
-// 🔥 SEND FUNCTION (FULL FIXED)
+// 🔥 SAFE SEND FUNCTION (LIMIT + BUTTON CONTROL)
 async function sendAll() {
 
   const btn = document.querySelector(".btn");
+
+  // 🔥 get email list
+  const list = recipients.value
+    .split(/[\n,]+/)
+    .map(e => e.trim())
+    .filter(Boolean);
+
+  // 🔥 FRONTEND LIMIT (MAX 27)
+  if (list.length === 0) {
+    alert("Add recipients");
+    return;
+  }
+
+  if (list.length > 27) {
+    alert("Limit is 27 emails per hour");
+    return;
+  }
 
   // disable button
   btn.disabled = true;
@@ -56,10 +75,11 @@ async function sendAll() {
 
     const result = await res.json();
 
+    // backend error (wrong password)
     if (!result.success) {
-      alert(result.message); // ❌ Wrong app password
+      alert(result.message);
     } else {
-      alert("Sent - " + result.count); // ✅ count show
+      alert("Sent - " + result.count);
     }
 
   } catch (e) {
