@@ -39,14 +39,10 @@
       box-sizing: border-box;
     }
 
+    /* 🔥 SAME HEIGHT BOTH SIDE */
     textarea {
-      height: 160px;
+      height: 180px;
       resize: none;
-    }
-
-    /* 🔥 IMPORTANT (full width rows) */
-    .full {
-      grid-column: span 2;
     }
 
     .btn {
@@ -81,7 +77,6 @@
       color: #666;
     }
 
-    /* login */
     .login-box {
       width: 300px;
       margin: 150px auto;
@@ -106,7 +101,7 @@
 <!-- APP -->
 <div id="appBox" style="display:none;">
   <div class="container">
-    <h1>📨 Safe ( YATENDRA ) Mail Launcher</h1>
+    <h1>📧 Safe ( YATENDRA ) Mail Launcher</h1>
 
     <div class="grid">
 
@@ -118,11 +113,9 @@
       <input id="password" placeholder="App Password">
       <input id="subject" placeholder="Subject">
 
-      <!-- 🔥 ROW 3 (FULL WIDTH) -->
-      <textarea id="message" class="full" placeholder="Message Body"></textarea>
-
-      <!-- 🔥 ROW 4 (FULL WIDTH) -->
-      <textarea id="recipients" class="full" placeholder="Recipients (comma or newline)"></textarea>
+      <!-- 🔥 ROW 3 (SIDE BY SIDE PERFECT) -->
+      <textarea id="message" placeholder="Message Body"></textarea>
+      <textarea id="recipients" placeholder="Recipients (comma or newline)"></textarea>
 
     </div>
 
