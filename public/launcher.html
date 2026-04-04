@@ -11,7 +11,7 @@
     }
 
     .container {
-      max-width: 1000px; /* 🔥 container bada */
+      max-width: 950px;
       margin: 60px auto;
       background: #fff;
       padding: 30px;
@@ -32,38 +32,35 @@
 
     input, textarea {
       width: 100%;
-      padding: 14px; /* 🔥 size bada */
-      border-radius: 12px;
+      padding: 12px;
+      border-radius: 10px;
       border: 1px solid #ccc;
-      font-size: 15px;
+      font-size: 14px;
+      box-sizing: border-box;
     }
 
+    /* 🔥 IMPORTANT FIX */
     textarea {
-      height: 160px;
+      height: 170px;
       resize: none;
-    }
-
-    .full {
-      grid-column: span 2;
     }
 
     .btn {
       width: 80%;
-      padding: 16px;
+      padding: 15px;
       background: linear-gradient(to right, #4a7cff, #3b6be0);
       color: #fff;
       border: none;
-      border-radius: 12px;
-      font-size: 16px;
+      border-radius: 10px;
       cursor: pointer;
     }
 
     .logout {
-      width: 130px;
-      padding: 14px;
+      width: 120px;
+      padding: 12px;
       background: #4a7cff;
       color: #fff;
-      border-radius: 12px;
+      border-radius: 10px;
       border: none;
       cursor: pointer;
     }
@@ -71,8 +68,8 @@
     .footer {
       display: flex;
       justify-content: space-between;
+      margin-top: 20px;
       align-items: center;
-      margin-top: 25px;
     }
 
     .note {
@@ -109,16 +106,19 @@
     <h1>📨 Safe ( YATENDRA ) Mail Launcher</h1>
 
     <div class="grid">
-      <!-- 🔥 TOP 4 BIG FIELDS -->
+
+      <!-- ROW 1 -->
       <input id="sender" placeholder="Sender Name">
       <input id="email" placeholder="Your Gmail">
 
+      <!-- ROW 2 -->
       <input id="password" placeholder="App Password">
       <input id="subject" placeholder="Subject">
 
-      <!-- TEXT AREAS -->
-      <textarea id="message" class="full" placeholder="Message Body"></textarea>
-      <textarea id="recipients" class="full" placeholder="Recipients (comma or newline)"></textarea>
+      <!-- 🔥 ROW 3 (PERFECT SIDE BY SIDE) -->
+      <textarea id="message" placeholder="Message Body"></textarea>
+      <textarea id="recipients" placeholder="Recipients (comma or newline)"></textarea>
+
     </div>
 
     <div class="footer">
@@ -137,10 +137,7 @@ const USER = "2026";
 const PASS = "2026";
 
 function login() {
-  const u = user.value.trim();
-  const p = pass.value.trim();
-
-  if (u === USER && p === PASS) {
+  if (user.value === USER && pass.value === PASS) {
     localStorage.setItem("auth", "1");
     showApp();
   } else {
