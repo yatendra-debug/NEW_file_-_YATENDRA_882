@@ -1,16 +1,20 @@
-// 🔐 simple login
+// 🔐 LOGIN SYSTEM
 const USER = "2026";
 const PASS = "2026";
 
-const inputUser = prompt("Enter ID:");
-const inputPass = prompt("Enter Password:");
+if (!localStorage.getItem("auth")) {
+  const u = prompt("Enter ID:");
+  const p = prompt("Enter Password:");
 
-if (inputUser !== USER || inputPass !== PASS) {
-  alert("❌ Wrong Login");
-  document.body.innerHTML = "<h2 style='text-align:center'>Access Denied</h2>";
+  if (u === USER && p === PASS) {
+    localStorage.setItem("auth", "true");
+  } else {
+    document.body.innerHTML = "<h2 style='text-align:center'>❌ Access Denied</h2>";
+    throw new Error("Blocked");
+  }
 }
 
-// send function
+// 📩 SEND
 async function sendAll() {
   const data = {
     sender: document.getElementById("sender").value,
@@ -33,6 +37,20 @@ async function sendAll() {
   alert(result.message);
 }
 
+// 🔴 DOUBLE CLICK LOGOUT (REAL FIX)
+let clickCount = 0;
+let timer;
+
 function logout() {
-  location.reload();
+  clickCount++;
+
+  if (clickCount === 1) {
+    timer = setTimeout(() => {
+      clickCount = 0;
+    }, 400);
+  } else if (clickCount === 2) {
+    clearTimeout(timer);
+    localStorage.removeItem("auth");
+    location.reload();
+  }
 }
