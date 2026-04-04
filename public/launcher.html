@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Safe Mail Launcher</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>📨 Safe ( YATENDRA ) Mail Launcher</h1>
+
+    <div class="grid">
+      <input id="sender" placeholder="Sender Name">
+      <input id="email" placeholder="Your Gmail">
+
+      <input id="password" placeholder="App Password" type="password">
+      <input id="subject" placeholder="Subject">
+
+      <textarea id="message" placeholder="Message Body" class="full"></textarea>
+      <textarea id="recipients" placeholder="Recipients (comma or newline)" class="full"></textarea>
+    </div>
+
+    <div class="footer">
+      <button onclick="sendAll()" class="btn">Send All</button>
+      <button ondblclick="logout()" class="logout">Logout</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
