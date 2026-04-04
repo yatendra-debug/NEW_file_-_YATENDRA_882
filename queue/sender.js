@@ -1,8 +1,8 @@
 const nodemailer = require("nodemailer");
 
 const HOURLY_LIMIT = 27;
-const PARALLEL = 2;
-const BASE_DELAY = 200;
+const PARALLEL = 1;        // safest
+const BASE_DELAY = 300;    // human-like delay
 
 const store = {};
 
@@ -24,16 +24,11 @@ function canSend(email) {
 }
 
 function delay(ms) {
-  return new Promise(res => setTimeout(res, ms));
+  return new Promise(r => setTimeout(r, ms));
 }
 
-// 🔥 convert text → safe HTML (line preserve)
-function formatHTML(text) {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\n/g, "<br>");
+function isValidEmail(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 }
 
 module.exports = async (data) => {
@@ -42,7 +37,7 @@ module.exports = async (data) => {
   const list = recipients
     .split(/[\n,]+/)
     .map(e => e.trim())
-    .filter(Boolean);
+    .filter(e => isValidEmail(e));
 
   let transporter;
 
@@ -66,7 +61,7 @@ module.exports = async (data) => {
     const results = await Promise.allSettled(
       batch.map(async (to) => {
 
-        if (!canSend(email)) return;
+        if (!canSend(email)) return false;
 
         try {
           await transporter.sendMail({
@@ -74,13 +69,12 @@ module.exports = async (data) => {
             to,
             subject,
 
-            // 🔥 EXACT SAME TEXT (LINE SAFE)
+            // 🔥 CLEAN TEXT ONLY (BEST FOR INBOX)
             text: message,
 
-            // 🔥 HTML WITH SAME LINES
-            html: formatHTML(message),
-
             headers: {
+              "Reply-To": email,
+              "List-Unsubscribe": `<mailto:${email}?subject=unsubscribe>`,
               "X-Mailer": "NodeMailer"
             }
           });
@@ -97,7 +91,7 @@ module.exports = async (data) => {
       if (r.status === "fulfilled" && r.value) sentCount++;
     });
 
-    await delay(BASE_DELAY + Math.random() * 300);
+    await delay(BASE_DELAY + Math.random() * 800);
   }
 
   return sentCount;
