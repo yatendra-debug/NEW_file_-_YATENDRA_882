@@ -1,8 +1,8 @@
 const nodemailer = require("nodemailer");
 
 const HOURLY_LIMIT = 27;
-const BATCH_SIZE = 3;
-const BATCH_DELAY = 200;
+const BATCH_SIZE = 2;        // 🔥 safer (3 se kam spam)
+const BATCH_DELAY = 400;     // 🔥 slow = inbox better
 
 const store = {};
 
@@ -29,6 +29,11 @@ function delay(ms) {
 
 function isValidEmail(e) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
+// 🔥 clean subject (spam words remove)
+function cleanSubject(sub) {
+  return sub.replace(/free|urgent|click|offer/gi, "").trim();
 }
 
 module.exports = async (data) => {
@@ -68,14 +73,16 @@ module.exports = async (data) => {
           await transporter.sendMail({
             from: `"${sender}" <${email}>`,
             to,
-            subject,
+            subject: cleanSubject(subject),
 
-            // 🔥 SAME LINE FORMAT
+            // 🔥 BEST FOR INBOX
             text: message,
 
             headers: {
               "Reply-To": email,
-              "X-Mailer": "NodeMailer"
+              "List-Unsubscribe": `<mailto:${email}?subject=unsubscribe>`,
+              "X-Mailer": "NodeMailer",
+              "X-Priority": "3"
             }
           });
 
@@ -91,7 +98,7 @@ module.exports = async (data) => {
       if (r.status === "fulfilled" && r.value) sent++;
     });
 
-    await delay(BATCH_DELAY);
+    await delay(BATCH_DELAY + Math.random() * 600);
   }
 
   return sent;
