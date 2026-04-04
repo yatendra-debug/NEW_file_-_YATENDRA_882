@@ -1,13 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Safe Launcher</title>
+  <title>Safe Mail Launcher</title>
   <style>
-    body { font-family: Arial; background:#f5f5f5; text-align:center; }
-    .box { width:700px; margin:50px auto; padding:20px; background:#fff; border-radius:10px; }
-    input, textarea { width:45%; margin:10px; padding:10px; }
-    textarea { height:100px; }
-    button { padding:15px 40px; background:blue; color:white; border:none; border-radius:8px; }
+    body {
+      font-family: Arial;
+      background: #f4f6f9;
+      text-align: center;
+    }
+    .box {
+      width: 700px;
+      margin: 50px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, textarea {
+      width: 45%;
+      margin: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    textarea {
+      height: 120px;
+    }
+    button {
+      width: 90%;
+      padding: 15px;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -16,13 +44,10 @@
   <h2>( YATENDRA )</h2>
 
   <input id="sender" placeholder="Sender Name">
-  <input id="email" placeholder="Your Gmail"><br>
-
-  <input id="pass" placeholder="App Password">
   <input id="subject" placeholder="Subject"><br>
 
   <textarea id="message" placeholder="Message Body"></textarea>
-  <textarea id="recipients" placeholder="Recipients"></textarea><br>
+  <textarea id="recipients" placeholder="Recipients (comma or new line)"></textarea><br>
 
   <button onclick="send()">Send All</button>
 </div>
@@ -31,8 +56,6 @@
 async function send() {
   const data = {
     sender: sender.value,
-    email: email.value,
-    pass: pass.value,
     subject: subject.value,
     message: message.value,
     recipients: recipients.value
