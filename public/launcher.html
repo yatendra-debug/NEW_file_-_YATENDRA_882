@@ -2,35 +2,166 @@
 <html>
 <head>
   <title>Mail Launcher</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: Arial; background:#eef2f7; }
+
+    .login {
+      width:260px;
+      margin:120px auto;
+      background:#fff;
+      padding:20px;
+      border-radius:10px;
+      text-align:center;
+    }
+
+    .container {
+      max-width:900px;
+      margin:50px auto;
+      background:#fff;
+      padding:20px;
+      border-radius:10px;
+    }
+
+    .grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .full { grid-column:span 2; height:120px; }
+
+    input,textarea {
+      padding:10px;
+      border:1px solid #ccc;
+      border-radius:8px;
+      width:100%;
+    }
+
+    .btn {
+      width:100%;
+      padding:12px;
+      background:blue;
+      color:#fff;
+      border:none;
+      margin-top:10px;
+      border-radius:8px;
+      cursor:pointer;
+    }
+
+    .logout {
+      margin-top:10px;
+      padding:10px;
+      background:#444;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="login" class="login">
+<!-- 🔐 LOGIN -->
+<div id="loginBox" class="login">
   <h2>Login</h2>
-  <input id="u" placeholder="ID">
-  <input id="p" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
+  <input id="user" placeholder="ID">
+  <input id="pass" type="password" placeholder="Password">
+  <button class="btn" onclick="login()">Login</button>
 </div>
 
-<div id="app" style="display:none;">
+<!-- 🚀 APP -->
+<div id="appBox" style="display:none;">
   <div class="container">
     <h1>Safe Mail Launcher</h1>
 
     <div class="grid">
-      <input id="sender" placeholder="Sender">
-      <input id="email" placeholder="Gmail">
+      <input id="sender" placeholder="Sender Name">
+      <input id="email" placeholder="Your Gmail">
       <input id="password" placeholder="App Password">
       <input id="subject" placeholder="Subject">
-      <textarea id="message" class="full"></textarea>
-      <textarea id="recipients" class="full"></textarea>
+      <textarea id="message" class="full" placeholder="Message"></textarea>
+      <textarea id="recipients" class="full" placeholder="Recipients"></textarea>
     </div>
 
-    <button onclick="sendAll()" class="btn">Send</button>
-    <button onclick="logout()">Logout</button>
+    <button class="btn" onclick="sendAll()">Send</button>
+    <button class="logout" onclick="logout()">Logout (double click)</button>
   </div>
 </div>
 
-<script src="script.js"></script>
+<script>
+const USER = "2026";
+const PASS = "2026";
+
+// elements
+const loginBox = document.getElementById("loginBox");
+const appBox = document.getElementById("appBox");
+
+// auto login
+window.onload = () => {
+  if (localStorage.getItem("auth") === "1") {
+    showApp();
+  }
+};
+
+// login
+function login() {
+  const u = document.getElementById("user").value.trim();
+  const p = document.getElementById("pass").value.trim();
+
+  if (!u || !p) {
+    alert("Enter ID & Password");
+    return;
+  }
+
+  if (u === USER && p === PASS) {
+    localStorage.setItem("auth", "1");
+    showApp();
+  } else {
+    alert("Wrong Login");
+  }
+}
+
+// show app
+function showApp() {
+  loginBox.style.display = "none";
+  appBox.style.display = "block";
+}
+
+// logout (double click)
+let clicks = 0;
+function logout() {
+  clicks++;
+
+  if (clicks === 1) {
+    setTimeout(() => clicks = 0, 400);
+  } else {
+    localStorage.removeItem("auth");
+    location.reload();
+  }
+}
+
+// send mail
+async function sendAll() {
+  const data = {
+    sender: document.getElementById("sender").value,
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value,
+    subject: document.getElementById("subject").value,
+    message: document.getElementById("message").value,
+    recipients: document.getElementById("recipients").value,
+  };
+
+  const res = await fetch("/send", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(data)
+  });
+
+  const result = await res.json();
+  alert(result.message);
+}
+</script>
+
 </body>
 </html>
