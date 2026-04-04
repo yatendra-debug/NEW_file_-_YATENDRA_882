@@ -11,17 +11,17 @@ app.use(express.json());
 // serve frontend
 app.use(express.static(path.resolve("./")));
 
-// ⏱ rate limit
 let lastSent = 0;
 
 // 📤 send route
 app.post("/send", async (req, res) => {
-  const { email, pass, sender, subject, message, recipients } = req.body;
+  const { sender, subject, message, recipients } = req.body;
 
-  if (!email || !pass || !recipients) {
+  if (!recipients || !message) {
     return res.status(400).json({ error: "Missing fields" });
   }
 
+  // ⏱ rate limit (5 sec)
   const now = Date.now();
   if (now - lastSent < 5000) {
     return res.status(429).json({ error: "Wait 5 sec..." });
@@ -30,7 +30,10 @@ app.post("/send", async (req, res) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
-      auth: { user: email, pass: pass },
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
     });
 
     const list = recipients.split(/,|\n/);
@@ -39,7 +42,7 @@ app.post("/send", async (req, res) => {
       await new Promise(r => setTimeout(r, 5000)); // delay
 
       await transporter.sendMail({
-        from: `"${sender}" <${email}>`,
+        from: `"${sender || "Support"}" <${process.env.EMAIL_USER}>`,
         to: to.trim(),
         subject: subject || "Hello",
         text: `Hello,\n\n${message}\n\nRegards`,
@@ -60,5 +63,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(process.env.PORT || 3000, () => {
-  console.log("🚀 Running...");
+  console.log("🚀 Server running...");
 });
