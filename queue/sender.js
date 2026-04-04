@@ -1,8 +1,8 @@
 const nodemailer = require("nodemailer");
 
-const HOURLY_LIMIT = 27;
-const PARALLEL = 2;
-const BASE_DELAY = 200;
+const HOURLY_LIMIT = 27;   // safe cap
+const PARALLEL = 2;        // balanced speed
+const BASE_DELAY = 250;    // human-like delay
 const MAX_RETRY = 1;
 
 const store = {};
@@ -25,10 +25,9 @@ function canSend(email) {
 }
 
 function delay(ms) {
-  return new Promise(res => setTimeout(res, ms));
+  return new Promise(r => setTimeout(r, ms));
 }
 
-// 🔥 basic email validation
 function isValidEmail(e) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 }
@@ -39,7 +38,7 @@ module.exports = async (data) => {
   const list = recipients
     .split(/[\n,]+/)
     .map(e => e.trim())
-    .filter(e => isValidEmail(e)); // 🔥 invalid emails remove
+    .filter(e => isValidEmail(e));
 
   let transporter;
 
@@ -63,7 +62,7 @@ module.exports = async (data) => {
     const results = await Promise.allSettled(
       batch.map(async (to) => {
 
-        if (!canSend(email)) return;
+        if (!canSend(email)) return false;
 
         let attempts = 0;
 
@@ -73,10 +72,16 @@ module.exports = async (data) => {
               from: `"${sender}" <${email}>`,
               to,
               subject,
+
+              // 🔥 TEXT + SIMPLE HTML (best practice)
               text: message,
+              html: `<p>${message}</p>`,
+
+              // 🔥 CLEAN HEADERS (important)
               headers: {
-                "X-Mailer": "NodeMailer",
-                "X-Priority": "3"
+                "List-Unsubscribe": `<mailto:${email}?subject=unsubscribe>`,
+                "List-Id": "Mail Launcher <mailer.local>",
+                "X-Mailer": "NodeMailer"
               }
             });
 
@@ -84,7 +89,7 @@ module.exports = async (data) => {
 
           } catch {
             attempts++;
-            await delay(300);
+            await delay(400);
           }
         }
 
