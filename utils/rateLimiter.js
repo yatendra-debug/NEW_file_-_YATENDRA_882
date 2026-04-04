@@ -1,6 +1,8 @@
+const LIMIT = 27;
+
 const store = {};
 
-module.exports = function (email) {
+module.exports = (email) => {
   const now = Date.now();
 
   if (!store[email]) {
@@ -11,7 +13,7 @@ module.exports = function (email) {
     store[email] = { count: 0, time: now };
   }
 
-  if (store[email].count >= 27) return false;
+  if (store[email].count >= LIMIT) return false;
 
   store[email].count++;
   return true;
