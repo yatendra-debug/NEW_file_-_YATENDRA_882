@@ -2,213 +2,37 @@
 <html>
 <head>
   <title>Safe Mail Launcher</title>
-
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #eef2f7;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 60px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-
-    textarea {
-      height: 180px;
-      resize: none;
-    }
-
-    .btn {
-      width: 80%;
-      padding: 15px;
-      background: linear-gradient(to right, #4a7cff, #3b6be0);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-
-    .logout {
-      width: 120px;
-      padding: 12px;
-      background: #4a7cff;
-      color: #fff;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 20px;
-    }
-
-    .note {
-      font-size: 12px;
-      color: #666;
-    }
-
-    .login-box {
-      width: 300px;
-      margin: 150px auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<!-- LOGIN -->
-<div id="loginBox" class="login-box">
+<div id="loginBox">
   <h2>Login</h2>
-  <input id="user" placeholder="Enter ID">
-  <input id="pass" type="password" placeholder="Enter Password">
-  <button class="btn" onclick="login()">Login</button>
+  <input id="user" placeholder="ID">
+  <input id="pass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
 </div>
 
-<!-- APP -->
 <div id="appBox" style="display:none;">
   <div class="container">
-    <h1>📧 Safe ( YATENDRA ) Mail Launcher</h1>
 
-    <div class="grid">
-      <input id="sender" placeholder="Sender Name">
-      <input id="email" placeholder="Your Gmail">
+    <h2>Safe Mail Launcher</h2>
 
-      <input id="password" type="password" placeholder="App Password">
-      <input id="subject" placeholder="Subject">
+    <input id="sender" placeholder="Sender Name"><br><br>
+    <input id="email" placeholder="Gmail"><br><br>
+    <input id="password" type="password" placeholder="App Password"><br><br>
+    <input id="subject" placeholder="Subject"><br><br>
 
-      <textarea id="message" placeholder="Message Body"></textarea>
-      <textarea id="recipients" placeholder="Recipients (comma or newline)"></textarea>
-    </div>
+    <textarea id="message" rows="5"></textarea><br><br>
+    <textarea id="recipients" rows="5"></textarea><br><br>
 
-    <div class="footer">
-      <button id="sendBtn" class="btn" onclick="sendAll()">Send All</button>
+    <button id="sendBtn" onclick="sendAll()">Send All</button>
+    <button ondblclick="logout()">Logout</button>
 
-      <div>
-        <button class="logout" ondblclick="logout()">Logout</button>
-        <div class="note">Double-click to logout</div>
-      </div>
-    </div>
   </div>
 </div>
 
-<script>
-const USER = "2026";
-const PASS = "2026";
-
-// LOGIN
-function login() {
-  const u = user.value.trim();
-  const p = pass.value.trim();
-
-  if (u === USER && p === PASS) {
-    localStorage.setItem("auth", "1");
-    showApp();
-  } else {
-    alert("Wrong Login");
-  }
-}
-
-function showApp() {
-  loginBox.style.display = "none";
-  appBox.style.display = "block";
-}
-
-window.onload = () => {
-  if (localStorage.getItem("auth") === "1") showApp();
-};
-
-// 🔥 REAL DOUBLE CLICK LOGOUT
-function logout() {
-  localStorage.removeItem("auth");
-  location.reload();
-}
-
-// 🔥 SAFE SEND
-async function sendAll() {
-
-  const btn = document.getElementById("sendBtn");
-
-  const list = recipients.value
-    .split(/[\n,]+/)
-    .map(e => e.trim())
-    .filter(Boolean);
-
-  if (list.length === 0) {
-    alert("Add recipients");
-    return;
-  }
-
-  if (list.length > 27) {
-    alert("Limit is 27 emails per hour");
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerText = "Sending...";
-
-  try {
-    const res = await fetch("/send", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        sender: sender.value,
-        email: email.value,
-        password: password.value,
-        subject: subject.value,
-        message: message.value,
-        recipients: recipients.value,
-      })
-    });
-
-    const result = await res.json();
-
-    if (!result.success) {
-      alert(result.message);
-    } else {
-      alert("Sent - " + result.count);
-    }
-
-  } catch {
-    alert("Server error");
-  }
-
-  btn.disabled = false;
-  btn.innerText = "Send All";
-}
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
