@@ -4,10 +4,10 @@ const sender = require("../queue/sender");
 
 router.post("/", async (req, res) => {
   try {
-    await sender(req.body);
-    res.json({ message: "✅ Emails sent safely" });
+    const count = await sender(req.body);
+    res.json({ success: true, count });
   } catch (err) {
-    res.json({ message: "❌ Error: " + err.message });
+    res.json({ success: false, message: err.message });
   }
 });
 
