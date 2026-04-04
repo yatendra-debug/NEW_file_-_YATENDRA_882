@@ -1,138 +1,136 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mail Launcher</title>
-  <style>
-    body { font-family: Arial; background:#eef2f7; }
+  <title>Safe Mail Launcher</title>
 
-    .login {
-      width:260px;
-      margin:120px auto;
-      background:#fff;
-      padding:20px;
-      border-radius:10px;
-      text-align:center;
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #eef2f7;
     }
 
     .container {
-      max-width:900px;
-      margin:50px auto;
-      background:#fff;
-      padding:20px;
-      border-radius:10px;
+      max-width: 900px;
+      margin: 60px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
     }
 
     .grid {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
     }
 
-    .full { grid-column:span 2; height:120px; }
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      outline: none;
+      font-size: 14px;
+    }
 
-    input,textarea {
-      padding:10px;
-      border:1px solid #ccc;
-      border-radius:8px;
-      width:100%;
+    textarea {
+      height: 150px;
+      resize: none;
+    }
+
+    .full {
+      grid-column: span 2;
     }
 
     .btn {
-      width:100%;
-      padding:12px;
-      background:blue;
-      color:#fff;
-      border:none;
-      margin-top:10px;
-      border-radius:8px;
-      cursor:pointer;
+      width: 80%;
+      padding: 15px;
+      background: linear-gradient(to right, #4a7cff, #3b6be0);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
     }
 
     .logout {
-      margin-top:10px;
-      padding:10px;
-      background:#444;
-      color:#fff;
-      border:none;
-      border-radius:8px;
-      cursor:pointer;
+      width: 120px;
+      padding: 12px;
+      background: #4a7cff;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #666;
+      text-align: right;
     }
   </style>
 </head>
 
 <body>
 
-<!-- 🔐 LOGIN -->
-<div id="loginBox" class="login">
-  <h2>Login</h2>
-  <input id="user" placeholder="ID">
-  <input id="pass" type="password" placeholder="Password">
-  <button class="btn" onclick="login()">Login</button>
-</div>
+<div class="container">
+  <h1>📨 Safe ( YATENDRA ) Mail Launcher</h1>
 
-<!-- 🚀 APP -->
-<div id="appBox" style="display:none;">
-  <div class="container">
-    <h1>Safe Mail Launcher</h1>
+  <div class="grid">
+    <input id="sender" placeholder="Sender Name">
+    <input id="email" placeholder="Your Gmail">
 
-    <div class="grid">
-      <input id="sender" placeholder="Sender Name">
-      <input id="email" placeholder="Your Gmail">
-      <input id="password" placeholder="App Password">
-      <input id="subject" placeholder="Subject">
-      <textarea id="message" class="full" placeholder="Message"></textarea>
-      <textarea id="recipients" class="full" placeholder="Recipients"></textarea>
+    <input id="password" placeholder="App Password">
+    <input id="subject" placeholder="Subject">
+
+    <textarea id="message" class="full" placeholder="Message Body"></textarea>
+    <textarea id="recipients" class="full" placeholder="Recipients (comma or newline)"></textarea>
+  </div>
+
+  <div class="footer">
+    <button class="btn" onclick="sendAll()">Send All</button>
+
+    <div>
+      <button class="logout" onclick="logout()">Logout</button>
+      <div class="note">Double-click to logout</div>
     </div>
-
-    <button class="btn" onclick="sendAll()">Send</button>
-    <button class="logout" onclick="logout()">Logout (double click)</button>
   </div>
 </div>
 
 <script>
+// 🔐 LOGIN (hidden prompt same style)
 const USER = "2026";
 const PASS = "2026";
 
-// elements
-const loginBox = document.getElementById("loginBox");
-const appBox = document.getElementById("appBox");
-
-// auto login
-window.onload = () => {
-  if (localStorage.getItem("auth") === "1") {
-    showApp();
-  }
-};
-
-// login
-function login() {
-  const u = document.getElementById("user").value.trim();
-  const p = document.getElementById("pass").value.trim();
-
-  if (!u || !p) {
-    alert("Enter ID & Password");
-    return;
-  }
+if (!localStorage.getItem("auth")) {
+  const u = prompt("Enter ID:");
+  const p = prompt("Enter Password:");
 
   if (u === USER && p === PASS) {
     localStorage.setItem("auth", "1");
-    showApp();
   } else {
-    alert("Wrong Login");
+    document.body.innerHTML = "<h2 style='text-align:center;margin-top:100px;'>Access Denied</h2>";
+    throw new Error("Blocked");
   }
 }
 
-// show app
-function showApp() {
-  loginBox.style.display = "none";
-  appBox.style.display = "block";
-}
-
-// logout (double click)
+// 🔴 DOUBLE CLICK LOGOUT
 let clicks = 0;
 function logout() {
   clicks++;
-
   if (clicks === 1) {
     setTimeout(() => clicks = 0, 400);
   } else {
@@ -141,20 +139,20 @@ function logout() {
   }
 }
 
-// send mail
+// 📩 SEND
 async function sendAll() {
   const data = {
-    sender: document.getElementById("sender").value,
-    email: document.getElementById("email").value,
-    password: document.getElementById("password").value,
-    subject: document.getElementById("subject").value,
-    message: document.getElementById("message").value,
-    recipients: document.getElementById("recipients").value,
+    sender: sender.value,
+    email: email.value,
+    password: password.value,
+    subject: subject.value,
+    message: message.value,
+    recipients: recipients.value,
   };
 
   const res = await fetch("/send", {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   });
 
