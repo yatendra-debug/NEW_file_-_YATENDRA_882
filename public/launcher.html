@@ -1,135 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Safe Mail Launcher</title>
-
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #eef2f7;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 60px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-
-    /* 🔥 SAME HEIGHT BOTH SIDE */
-    textarea {
-      height: 180px;
-      resize: none;
-    }
-
-    .btn {
-      width: 80%;
-      padding: 15px;
-      background: linear-gradient(to right, #4a7cff, #3b6be0);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-
-    .logout {
-      width: 120px;
-      padding: 12px;
-      background: #4a7cff;
-      color: #fff;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 20px;
-    }
-
-    .note {
-      font-size: 12px;
-      color: #666;
-    }
-
-    .login-box {
-      width: 300px;
-      margin: 150px auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-    }
-  </style>
-</head>
-
-<body>
-
-<!-- LOGIN -->
-<div id="loginBox" class="login-box">
-  <h2>Login</h2>
-  <input id="user" placeholder="Enter ID">
-  <input id="pass" type="password" placeholder="Enter Password">
-  <button class="btn" onclick="login()">Login</button>
-</div>
-
-<!-- APP -->
-<div id="appBox" style="display:none;">
-  <div class="container">
-    <h1>📧 Safe ( YATENDRA ) Mail Launcher</h1>
-
-    <div class="grid">
-
-      <!-- ROW 1 -->
-      <input id="sender" placeholder="Sender Name">
-      <input id="email" placeholder="Your Gmail">
-
-      <!-- ROW 2 -->
-      <input id="password" placeholder="App Password">
-      <input id="subject" placeholder="Subject">
-
-      <!-- 🔥 ROW 3 (SIDE BY SIDE PERFECT) -->
-      <textarea id="message" placeholder="Message Body"></textarea>
-      <textarea id="recipients" placeholder="Recipients (comma or newline)"></textarea>
-
-    </div>
-
-    <div class="footer">
-      <button class="btn" onclick="sendAll()">Send All</button>
-
-      <div>
-        <button class="logout" onclick="logout()">Logout</button>
-        <div class="note">Double-click to logout</div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
 const USER = "2026";
 const PASS = "2026";
@@ -163,26 +31,43 @@ function logout() {
   }
 }
 
+// 🔥 SEND FUNCTION (FULL FIXED)
 async function sendAll() {
-  const data = {
-    sender: sender.value,
-    email: email.value,
-    password: password.value,
-    subject: subject.value,
-    message: message.value,
-    recipients: recipients.value,
-  };
 
-  const res = await fetch("/send", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(data)
-  });
+  const btn = document.querySelector(".btn");
 
-  const result = await res.json();
-  alert(result.message);
+  // disable button
+  btn.disabled = true;
+  btn.innerText = "Sending...";
+
+  try {
+    const res = await fetch("/send", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        sender: sender.value,
+        email: email.value,
+        password: password.value,
+        subject: subject.value,
+        message: message.value,
+        recipients: recipients.value,
+      })
+    });
+
+    const result = await res.json();
+
+    if (!result.success) {
+      alert(result.message); // ❌ Wrong app password
+    } else {
+      alert("Sent - " + result.count); // ✅ count show
+    }
+
+  } catch (e) {
+    alert("Server error");
+  }
+
+  // enable again
+  btn.disabled = false;
+  btn.innerText = "Send All";
 }
 </script>
-
-</body>
-</html>
