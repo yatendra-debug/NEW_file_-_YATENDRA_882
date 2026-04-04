@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
 const path = require("path");
+const cors = require("cors");
 
 const sendRoute = require("./routes/sendRoute");
 
@@ -10,20 +10,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ IMPORTANT: public folder serve
+// static frontend
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ ROOT FIX (MOST IMPORTANT)
+// root fix
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "launcher.html"));
 });
 
-// API
+// api
 app.use("/send", sendRoute);
 
-// ✅ PORT FIX
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("🚀 Server running on port", PORT);
+  console.log("Server running on", PORT);
 });
