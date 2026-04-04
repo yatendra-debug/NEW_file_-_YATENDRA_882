@@ -1,76 +1,53 @@
-// 🔐 LOGIN DETAILS
-const USER = "2026";
-const PASS = "2026";
+const USER="2026", PASS="2026";
 
-// elements get karo (IMPORTANT FIX)
-const loginBox = document.getElementById("login");
-const appBox = document.getElementById("app");
-
-const userInput = document.getElementById("u");
-const passInput = document.getElementById("p");
-
-// auto login check
-window.onload = () => {
-  if (localStorage.getItem("auth") === "1") {
-    showApp();
-  }
-};
-
-// login function (FIXED)
-function login() {
-  const u = userInput.value.trim();
-  const p = passInput.value.trim();
-
-  if (!u || !p) {
-    alert("Enter ID & Password");
-    return;
-  }
-
-  if (u === USER && p === PASS) {
-    localStorage.setItem("auth", "1");
-    showApp();
-  } else {
-    alert("❌ Wrong Login");
-  }
+function login(){
+  if(user.value===USER && pass.value===PASS){
+    localStorage.setItem("auth","1");
+    show();
+  } else alert("Wrong Login");
 }
 
-// show app
-function showApp() {
-  loginBox.style.display = "none";
-  appBox.style.display = "block";
+function show(){
+  loginBox.style.display="none";
+  appBox.style.display="block";
 }
 
-// logout (double click logic)
-let clicks = 0;
+if(localStorage.getItem("auth")) show();
 
-function logout() {
-  clicks++;
-
-  if (clicks === 1) {
-    setTimeout(() => (clicks = 0), 400);
-  } else {
-    localStorage.removeItem("auth");
-    location.reload();
-  }
+function logout(){
+  localStorage.removeItem("auth");
+  location.reload();
 }
 
-// send mail
-async function sendAll() {
-  const data = {
-    sender: document.getElementById("sender").value,
-    email: document.getElementById("email").value,
-    password: document.getElementById("password").value,
-    subject: document.getElementById("subject").value,
-    message: document.getElementById("message").value,
-    recipients: document.getElementById("recipients").value,
-  };
+async function sendAll(){
 
-  const res = await fetch("/send", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+  const btn=document.getElementById("sendBtn");
+
+  const list=recipients.value.split(/[\n,]+/).filter(Boolean);
+
+  if(list.length===0) return alert("Add emails");
+  if(list.length>27) return alert("Limit 27/hour");
+
+  btn.disabled=true;
+  btn.innerText="Sending...";
+
+  const res=await fetch("/send",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      sender:sender.value,
+      email:email.value,
+      password:password.value,
+      subject:subject.value,
+      message:message.value,
+      recipients:recipients.value
+    })
   });
 
-  const result = await res.json();
-  alert(result.message);
+  const r=await res.json();
+
+  alert(r.success ? "Sent - "+r.count : r.message);
+
+  btn.disabled=false;
+  btn.innerText="Send All";
 }
