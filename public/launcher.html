@@ -89,7 +89,7 @@
 
 <body>
 
-<!-- 🔐 LOGIN -->
+<!-- LOGIN -->
 <div id="loginBox" class="login-box">
   <h2>Login</h2>
   <input id="user" placeholder="Enter ID">
@@ -97,22 +97,20 @@
   <button class="btn" onclick="login()">Login</button>
 </div>
 
-<!-- 🚀 APP -->
+<!-- APP -->
 <div id="appBox" style="display:none;">
   <div class="container">
     <h1>📧 Safe ( YATENDRA ) Mail Launcher</h1>
 
     <div class="grid">
-
       <input id="sender" placeholder="Sender Name">
       <input id="email" placeholder="Your Gmail">
 
-      <input id="password" placeholder="App Password">
+      <input id="password" type="password" placeholder="App Password">
       <input id="subject" placeholder="Subject">
 
       <textarea id="message" placeholder="Message Body"></textarea>
       <textarea id="recipients" placeholder="Recipients (comma or newline)"></textarea>
-
     </div>
 
     <div class="footer">
@@ -130,10 +128,9 @@
 const USER = "2026";
 const PASS = "2026";
 
-// 🔐 LOGIN
 function login() {
-  const u = document.getElementById("user").value.trim();
-  const p = document.getElementById("pass").value.trim();
+  const u = user.value.trim();
+  const p = pass.value.trim();
 
   if (u === USER && p === PASS) {
     localStorage.setItem("auth", "1");
@@ -143,20 +140,15 @@ function login() {
   }
 }
 
-// SHOW APP
 function showApp() {
-  document.getElementById("loginBox").style.display = "none";
-  document.getElementById("appBox").style.display = "block";
+  loginBox.style.display = "none";
+  appBox.style.display = "block";
 }
 
-// AUTO LOGIN FIX
-window.onload = function () {
-  if (localStorage.getItem("auth") === "1") {
-    showApp();
-  }
+window.onload = () => {
+  if (localStorage.getItem("auth") === "1") showApp();
 };
 
-// 🔴 LOGOUT
 let clicks = 0;
 function logout() {
   clicks++;
@@ -168,7 +160,6 @@ function logout() {
   }
 }
 
-// 🚀 SEND FUNCTION (SAFE)
 async function sendAll() {
 
   const btn = document.getElementById("sendBtn");
@@ -213,7 +204,7 @@ async function sendAll() {
       alert("Sent - " + result.count);
     }
 
-  } catch (e) {
+  } catch {
     alert("Server error");
   }
 
