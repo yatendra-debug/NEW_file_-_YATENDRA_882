@@ -1,43 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Safe Mail Launcher</title>
+  <title>Mail Launcher</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-  <!-- 🔐 LOGIN SCREEN -->
-  <div id="loginBox" class="login-box">
-    <h2>🔐 Secure Login</h2>
-    <input type="text" id="loginUser" placeholder="Enter ID">
-    <input type="password" id="loginPass" placeholder="Enter Password">
-    <button onclick="login()">Login</button>
-  </div>
+<div id="login" class="login">
+  <h2>Login</h2>
+  <input id="u" placeholder="ID">
+  <input id="p" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
 
-  <!-- 🚀 MAIN APP -->
-  <div id="app" style="display:none;">
-    <div class="container">
-      <h1>📨 Safe ( YATENDRA ) Mail Launcher</h1>
+<div id="app" style="display:none;">
+  <div class="container">
+    <h1>Safe Mail Launcher</h1>
 
-      <div class="grid">
-        <input id="sender" placeholder="Sender Name">
-        <input id="email" placeholder="Your Gmail">
-
-        <input id="password" placeholder="App Password" type="password">
-        <input id="subject" placeholder="Subject">
-
-        <textarea id="message" class="full" placeholder="Message Body"></textarea>
-        <textarea id="recipients" class="full" placeholder="Recipients"></textarea>
-      </div>
-
-      <div class="footer">
-        <button onclick="sendAll()" class="btn">Send All</button>
-        <button onclick="logout()" class="logout">Logout</button>
-      </div>
+    <div class="grid">
+      <input id="sender" placeholder="Sender">
+      <input id="email" placeholder="Gmail">
+      <input id="password" placeholder="App Password">
+      <input id="subject" placeholder="Subject">
+      <textarea id="message" class="full"></textarea>
+      <textarea id="recipients" class="full"></textarea>
     </div>
+
+    <button onclick="sendAll()" class="btn">Send</button>
+    <button onclick="logout()">Logout</button>
   </div>
+</div>
 
 <script src="script.js"></script>
 </body>
