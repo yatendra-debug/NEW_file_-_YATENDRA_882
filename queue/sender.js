@@ -2,7 +2,8 @@ const nodemailer = require("nodemailer");
 
 const HOURLY_LIMIT = 27;
 const PARALLEL = 2;
-const BASE_DELAY = 180;
+const BASE_DELAY = 200;
+const MAX_RETRY = 1;
 
 const store = {};
 
@@ -27,10 +28,18 @@ function delay(ms) {
   return new Promise(res => setTimeout(res, ms));
 }
 
+// 🔥 basic email validation
+function isValidEmail(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
 module.exports = async (data) => {
   const { email, password, sender, subject, message, recipients } = data;
 
-  const list = recipients.split(/[\n,]+/).map(e => e.trim()).filter(Boolean);
+  const list = recipients
+    .split(/[\n,]+/)
+    .map(e => e.trim())
+    .filter(e => isValidEmail(e)); // 🔥 invalid emails remove
 
   let transporter;
 
@@ -56,18 +65,30 @@ module.exports = async (data) => {
 
         if (!canSend(email)) return;
 
-        try {
-          await transporter.sendMail({
-            from: `"${sender}" <${email}>`,
-            to,
-            subject,
-            text: message,
-          });
+        let attempts = 0;
 
-          return true;
-        } catch {
-          return false;
+        while (attempts <= MAX_RETRY) {
+          try {
+            await transporter.sendMail({
+              from: `"${sender}" <${email}>`,
+              to,
+              subject,
+              text: message,
+              headers: {
+                "X-Mailer": "NodeMailer",
+                "X-Priority": "3"
+              }
+            });
+
+            return true;
+
+          } catch {
+            attempts++;
+            await delay(300);
+          }
         }
+
+        return false;
       })
     );
 
