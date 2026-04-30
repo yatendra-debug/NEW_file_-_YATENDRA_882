@@ -1,4 +1,4 @@
-async function send() {
+async function sendMail() {
   const data = {
     name: document.getElementById("name").value,
     email: document.getElementById("email").value,
@@ -7,6 +7,11 @@ async function send() {
     message: document.getElementById("message").value,
     recipients: document.getElementById("recipients").value
   };
+
+  if (!data.email || !data.pass) {
+    alert("Gmail aur App Password required hai");
+    return;
+  }
 
   const res = await fetch("/send", {
     method: "POST",
@@ -17,5 +22,5 @@ async function send() {
   });
 
   const result = await res.json();
-  alert("Queued: " + result.total);
+  alert("✅ Emails queued: " + result.total);
 }
