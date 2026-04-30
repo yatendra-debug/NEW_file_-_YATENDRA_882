@@ -15,13 +15,14 @@ const PORT = process.env.PORT || 3000;
 /* ⚖️ SAFE LIMIT SETTINGS */
 const HOURLY_LIMIT = 27;
 const PARALLEL = 2;
-const DELAY_MS = 250;
+const DELAY_MS = 300;
 
-// per email tracking
+// usage tracking
 let usage = {};
 
 function resetIfNeeded(email) {
   const now = Date.now();
+
   if (!usage[email] || now > usage[email].reset) {
     usage[email] = {
       count: 0,
@@ -30,13 +31,35 @@ function resetIfNeeded(email) {
   }
 }
 
-// send function
+// transporter
+function createTransporter(email, pass) {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: email, pass }
+  });
+}
+
+// clean text (light spam filter)
+function cleanText(text) {
+  return text
+    .replace(/free/gi, "info")
+    .replace(/offer/gi, "details")
+    .replace(/buy/gi, "check");
+}
+
+// send mail
 async function sendMail(transporter, data) {
   return transporter.sendMail({
     from: `"${data.name}" <${data.email}>`,
     to: data.to,
     subject: data.subject,
-    text: data.message
+    text: cleanText(data.message),
+
+    headers: {
+      "X-Mailer": "NodeMailer",
+      "X-Priority": "3",
+      "Precedence": "bulk"
+    }
   });
 }
 
@@ -53,42 +76,44 @@ app.post("/send", async (req, res) => {
   let transporter;
 
   try {
-    transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: { user: email, pass }
-    });
-
+    transporter = createTransporter(email, pass);
     await transporter.verify();
-  } catch (err) {
+  } catch {
     return res.json({ status: "auth_error" });
   }
 
-  const list = recipients.split(/[\n,]+/).filter(e => e.trim());
+  const list = recipients
+    .split(/[\n,]+/)
+    .map(e => e.trim())
+    .filter(e => e);
 
   let sent = 0;
 
   for (let i = 0; i < list.length; i += PARALLEL) {
+    if (usage[email].count >= HOURLY_LIMIT) break;
+
     const batch = list.slice(i, i + PARALLEL);
 
-    const promises = batch.map(async (to) => {
-      if (usage[email].count >= HOURLY_LIMIT) return;
-
-      try {
-        await sendMail(transporter, {
+    const results = await Promise.allSettled(
+      batch.map(to =>
+        sendMail(transporter, {
           email,
           name,
-          to,
           subject,
-          message
-        });
+          message,
+          to
+        })
+      )
+    );
 
+    results.forEach(r => {
+      if (r.status === "fulfilled") {
         usage[email].count++;
         sent++;
-      } catch {}
+      }
     });
 
-    await Promise.all(promises);
-
+    // 🔥 YOUR SPEED (300ms)
     await new Promise(r => setTimeout(r, DELAY_MS));
   }
 
@@ -98,4 +123,6 @@ app.post("/send", async (req, res) => {
   });
 });
 
-app.listen(PORT, () => console.log("Server running"));
+app.listen(PORT, () => {
+  console.log("🚀 Server running on", PORT);
+});
