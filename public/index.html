@@ -15,7 +15,6 @@
 
   <div class="grid">
 
-    <!-- LEFT SIDE -->
     <input id="name" placeholder="Sender Name">
     <input id="email" placeholder="Your Gmail">
 
@@ -30,7 +29,9 @@
   <!-- BUTTON ROW -->
   <div class="btn-row">
     <button class="send-btn" onclick="sendMail()">Send All</button>
-    <button class="logout-btn" ondblclick="logout()">Logout</button>
+
+    <!-- 🔥 IMPORTANT CHANGE -->
+    <button class="logout-btn" id="logoutBtn">Logout</button>
   </div>
 
   <small>Double-click to logout</small>
