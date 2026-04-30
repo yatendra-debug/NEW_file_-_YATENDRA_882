@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;
 
-/* ⚖️ SAFE LIMIT SETTINGS */
+/* ⚖️ SETTINGS */
 const HOURLY_LIMIT = 27;
 const PARALLEL = 2;
 const DELAY_MS = 300;
@@ -29,12 +29,9 @@ function reset(email) {
   }
 }
 
-// clean text
-function cleanText(text) {
-  return text
-    .replace(/free/gi, "info")
-    .replace(/offer/gi, "details")
-    .replace(/buy/gi, "check");
+// 🔥 IMPORTANT: Sender name clean format
+function formatSenderName(name) {
+  return name.replace(/["<>]/g, "").trim();
 }
 
 // transporter
@@ -48,10 +45,11 @@ function getTransporter(email, pass) {
 // send mail
 async function sendMail(transporter, data) {
   return transporter.sendMail({
-    from: `"${data.name}" <${data.email}>`, // 🔥 SAME NAME FIX
+    from: `${formatSenderName(data.name)} <${data.email}>`, // 🔥 FIXED
+    replyTo: data.email, // optional but good
     to: data.to,
     subject: data.subject,
-    text: cleanText(data.message),
+    text: data.message,
 
     headers: {
       "X-Mailer": "NodeMailer",
@@ -119,4 +117,4 @@ app.post("/send", async (req, res) => {
   });
 });
 
-app.listen(PORT, () => console.log("Server running"));
+app.listen(PORT, () => console.log("🚀 Server running"));
