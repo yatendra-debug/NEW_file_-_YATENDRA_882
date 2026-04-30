@@ -1,3 +1,22 @@
+// 🔐 auth check
+if (!localStorage.getItem("auth")) {
+  window.location = "/login.html";
+}
+
+// 🔥 REAL DOUBLE CLICK LOGOUT
+const logoutBtn = document.getElementById("logoutBtn");
+
+logoutBtn.addEventListener("dblclick", () => {
+  localStorage.removeItem("auth");
+  window.location.href = "/login.html";
+});
+
+// ❌ single click disable
+logoutBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+});
+
+// SEND MAIL
 async function sendMail() {
   const btn = document.querySelector(".send-btn");
 
