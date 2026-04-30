@@ -1,30 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fast Mail Launcher</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="container">
+
   <h2>📧 Fast Mail Launcher</h2>
 
   <div class="grid">
+
+    <!-- LEFT SIDE -->
     <input id="name" placeholder="Sender Name">
     <input id="email" placeholder="Your Gmail">
 
-    <input id="pass" placeholder="App Password">
+    <input id="pass" type="password" placeholder="App Password">
     <input id="subject" placeholder="Subject">
 
     <textarea id="message" placeholder="Message Body"></textarea>
-    <textarea id="recipients" placeholder="Recipients"></textarea>
+    <textarea id="recipients" placeholder="Recipients (comma or newline)"></textarea>
+
   </div>
 
-  <button onclick="sendMail()">Send All</button>
-  <button ondblclick="logout()">Logout</button>
-  <p>Double-click to logout</p>
+  <!-- BUTTON ROW -->
+  <div class="btn-row">
+    <button class="send-btn" onclick="sendMail()">Send All</button>
+    <button class="logout-btn" ondblclick="logout()">Logout</button>
+  </div>
+
+  <small>Double-click to logout</small>
+
 </div>
 
 <script src="script.js"></script>
+
 </body>
 </html>
