@@ -12,7 +12,6 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;
 
-/* ⚖️ SETTINGS */
 const HOURLY_LIMIT = 27;
 const PARALLEL = 2;
 const DELAY_MS = 300;
@@ -24,33 +23,33 @@ function reset(email) {
   if (!usage[email] || now > usage[email].reset) {
     usage[email] = {
       count: 0,
-      reset: now + 60 * 60 * 1000
+      reset: now + 3600000
     };
   }
 }
 
-// transporter
-function createTransporter(email, pass) {
+function transporter(email, pass) {
   return nodemailer.createTransport({
     service: "gmail",
-    auth: {
-      user: email,
-      pass: pass
-    }
+    auth: { user: email, pass }
   });
 }
 
-// send function
-async function sendMail(transporter, data) {
-  return transporter.sendMail({
-    from: `"${data.name}" <${data.email}>`,
+// 🔥 FIX: sender name fallback
+function safeName(name) {
+  if (!name || name.trim() === "") return "Mail Sender";
+  return name.replace(/["<>]/g, "").trim();
+}
+
+async function sendMail(tp, data) {
+  return tp.sendMail({
+    from: `"${safeName(data.name)}" <${data.email}>`,
     to: data.to,
     subject: data.subject,
     text: data.message
   });
 }
 
-// API
 app.post("/send", async (req, res) => {
   const { email, pass, name, subject, message, recipients } = req.body;
 
@@ -60,15 +59,11 @@ app.post("/send", async (req, res) => {
     return res.json({ status: "limit" });
   }
 
-  let transporter;
-
+  let tp;
   try {
-    transporter = createTransporter(email, pass);
-
-    // 🔥 IMPORTANT VERIFY
-    await transporter.verify();
-  } catch (err) {
-    console.log("Auth Error:", err.message);
+    tp = transporter(email, pass);
+    await tp.verify();
+  } catch {
     return res.json({ status: "auth_error" });
   }
 
@@ -86,13 +81,7 @@ app.post("/send", async (req, res) => {
 
     const results = await Promise.allSettled(
       batch.map(to =>
-        sendMail(transporter, {
-          email,
-          name,
-          subject,
-          message,
-          to
-        })
+        sendMail(tp, { email, name, subject, message, to })
       )
     );
 
@@ -100,8 +89,6 @@ app.post("/send", async (req, res) => {
       if (r.status === "fulfilled") {
         usage[email].count++;
         sent++;
-      } else {
-        console.log("Send fail:", r.reason?.message);
       }
     });
 
@@ -114,6 +101,4 @@ app.post("/send", async (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log("🚀 Server running on", PORT);
-});
+app.listen(PORT, () => console.log("Server running"));
