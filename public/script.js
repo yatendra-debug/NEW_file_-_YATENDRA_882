@@ -8,6 +8,8 @@ function logout() {
 }
 
 async function sendMail() {
+  const btn = document.querySelector("button");
+
   const data = {
     name: name.value,
     email: email.value,
@@ -17,17 +19,34 @@ async function sendMail() {
     recipients: recipients.value
   };
 
-  const res = await fetch("/send", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(data)
-  });
+  if (!data.email || !data.pass) {
+    alert("Fill Gmail + App Password");
+    return;
+  }
 
-  const r = await res.json();
+  // 🔥 BUTTON LOADING
+  btn.innerText = "Sending...";
+  btn.disabled = true;
 
-  if (r.status === "auth_error") return alert("APP Password Wrong");
-  if (r.status === "limit") return alert("Limit Full");
-  if (r.status === "fail") return alert("0");
+  try {
+    const res = await fetch("/send", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(data)
+    });
 
-  alert("Send -" + r.sent);
+    const r = await res.json();
+
+    if (r.status === "auth_error") alert("APP Password Wrong");
+    else if (r.status === "limit") alert("Limit Full");
+    else if (r.status === "fail") alert("0");
+    else alert("Send -" + r.sent);
+
+  } catch {
+    alert("Error");
+  }
+
+  // 🔥 BUTTON RESET
+  btn.innerText = "Send All";
+  btn.disabled = false;
 }
