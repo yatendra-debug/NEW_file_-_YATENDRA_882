@@ -7,89 +7,95 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
-// middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// queue system
-let queue = [];
-let sending = false;
+const PORT = process.env.PORT || 3000;
 
-const delay = (ms) => new Promise(res => setTimeout(res, ms));
+/* ⚖️ SAFE LIMIT SETTINGS */
+const HOURLY_LIMIT = 27;
+const PARALLEL = 2;
+const DELAY_MS = 250;
 
-// send mail
-async function sendMail(config, data) {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: config.email,
-      pass: config.pass
-    }
-  });
+// per email tracking
+let usage = {};
 
-  await transporter.sendMail({
-    from: `"${data.name}" <${config.email}>`,
-    to: data.to,
-    subject: data.subject,
-    text: data.text
-  });
+function resetIfNeeded(email) {
+  const now = Date.now();
+  if (!usage[email] || now > usage[email].reset) {
+    usage[email] = {
+      count: 0,
+      reset: now + 60 * 60 * 1000
+    };
+  }
 }
 
-// queue processor
-async function processQueue(config) {
-  if (sending) return;
-  sending = true;
-
-  while (queue.length > 0) {
-    const mail = queue.shift();
-
-    try {
-      await sendMail(config, mail);
-      console.log("✅ Sent:", mail.to);
-    } catch (err) {
-      console.log("❌ Error:", mail.to, err.message);
-    }
-
-    // safe delay (7–15 sec)
-    const wait = Math.floor(Math.random() * 8000) + 7000;
-    await delay(wait);
-  }
-
-  sending = false;
+// send function
+async function sendMail(transporter, data) {
+  return transporter.sendMail({
+    from: `"${data.name}" <${data.email}>`,
+    to: data.to,
+    subject: data.subject,
+    text: data.message
+  });
 }
 
 // API
-app.post("/send", (req, res) => {
+app.post("/send", async (req, res) => {
   const { email, pass, name, subject, message, recipients } = req.body;
 
-  const list = recipients
-    .split(/[\n,]+/)
-    .map(e => e.trim())
-    .filter(e => e);
+  resetIfNeeded(email);
 
-  list.forEach(r => {
-    queue.push({
-      to: r,
-      subject,
-      text: message,
-      name
+  if (usage[email].count >= HOURLY_LIMIT) {
+    return res.json({ status: "limit" });
+  }
+
+  let transporter;
+
+  try {
+    transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: email, pass }
     });
+
+    await transporter.verify();
+  } catch (err) {
+    return res.json({ status: "auth_error" });
+  }
+
+  const list = recipients.split(/[\n,]+/).filter(e => e.trim());
+
+  let sent = 0;
+
+  for (let i = 0; i < list.length; i += PARALLEL) {
+    const batch = list.slice(i, i + PARALLEL);
+
+    const promises = batch.map(async (to) => {
+      if (usage[email].count >= HOURLY_LIMIT) return;
+
+      try {
+        await sendMail(transporter, {
+          email,
+          name,
+          to,
+          subject,
+          message
+        });
+
+        usage[email].count++;
+        sent++;
+      } catch {}
+    });
+
+    await Promise.all(promises);
+
+    await new Promise(r => setTimeout(r, DELAY_MS));
+  }
+
+  res.json({
+    status: sent > 0 ? "ok" : "fail",
+    sent
   });
-
-  processQueue({ email, pass });
-
-  res.json({ status: "queued", total: list.length });
 });
 
-// health route
-app.get("/", (req, res) => {
-  res.send("🚀 Gmail Launcher Running");
-});
-
-// IMPORTANT for Render
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
+app.listen(PORT, () => console.log("Server running"));
