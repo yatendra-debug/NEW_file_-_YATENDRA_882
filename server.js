@@ -17,12 +17,10 @@ const HOURLY_LIMIT = 27;
 const PARALLEL = 2;
 const DELAY_MS = 300;
 
-// usage tracking
 let usage = {};
 
-function resetIfNeeded(email) {
+function reset(email) {
   const now = Date.now();
-
   if (!usage[email] || now > usage[email].reset) {
     usage[email] = {
       count: 0,
@@ -31,15 +29,7 @@ function resetIfNeeded(email) {
   }
 }
 
-// transporter
-function createTransporter(email, pass) {
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: email, pass }
-  });
-}
-
-// clean text (light spam filter)
+// clean text
 function cleanText(text) {
   return text
     .replace(/free/gi, "info")
@@ -47,18 +37,25 @@ function cleanText(text) {
     .replace(/buy/gi, "check");
 }
 
+// transporter
+function getTransporter(email, pass) {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: email, pass }
+  });
+}
+
 // send mail
 async function sendMail(transporter, data) {
   return transporter.sendMail({
-    from: `"${data.name}" <${data.email}>`,
+    from: `"${data.name}" <${data.email}>`, // 🔥 SAME NAME FIX
     to: data.to,
     subject: data.subject,
     text: cleanText(data.message),
 
     headers: {
       "X-Mailer": "NodeMailer",
-      "X-Priority": "3",
-      "Precedence": "bulk"
+      "X-Priority": "3"
     }
   });
 }
@@ -67,7 +64,7 @@ async function sendMail(transporter, data) {
 app.post("/send", async (req, res) => {
   const { email, pass, name, subject, message, recipients } = req.body;
 
-  resetIfNeeded(email);
+  reset(email);
 
   if (usage[email].count >= HOURLY_LIMIT) {
     return res.json({ status: "limit" });
@@ -76,7 +73,7 @@ app.post("/send", async (req, res) => {
   let transporter;
 
   try {
-    transporter = createTransporter(email, pass);
+    transporter = getTransporter(email, pass);
     await transporter.verify();
   } catch {
     return res.json({ status: "auth_error" });
@@ -113,7 +110,6 @@ app.post("/send", async (req, res) => {
       }
     });
 
-    // 🔥 YOUR SPEED (300ms)
     await new Promise(r => setTimeout(r, DELAY_MS));
   }
 
@@ -123,6 +119,4 @@ app.post("/send", async (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log("🚀 Server running on", PORT);
-});
+app.listen(PORT, () => console.log("Server running"));
