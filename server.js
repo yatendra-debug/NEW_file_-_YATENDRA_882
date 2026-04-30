@@ -7,16 +7,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// queue system
 let queue = [];
 let sending = false;
 
-// delay
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
-// send mail function
+// send mail
 async function sendMail(config, data) {
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -80,4 +82,14 @@ app.post("/send", (req, res) => {
   res.json({ status: "queued", total: list.length });
 });
 
-app.listen(3000, () => console.log("🚀 Server running"));
+// health route
+app.get("/", (req, res) => {
+  res.send("🚀 Gmail Launcher Running");
+});
+
+// IMPORTANT for Render
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
+});
