@@ -29,32 +29,24 @@ function reset(email) {
   }
 }
 
-// 🔥 IMPORTANT: Sender name clean format
-function formatSenderName(name) {
-  return name.replace(/["<>]/g, "").trim();
-}
-
 // transporter
-function getTransporter(email, pass) {
+function createTransporter(email, pass) {
   return nodemailer.createTransport({
     service: "gmail",
-    auth: { user: email, pass }
+    auth: {
+      user: email,
+      pass: pass
+    }
   });
 }
 
-// send mail
+// send function
 async function sendMail(transporter, data) {
   return transporter.sendMail({
-    from: `${formatSenderName(data.name)} <${data.email}>`, // 🔥 FIXED
-    replyTo: data.email, // optional but good
+    from: `"${data.name}" <${data.email}>`,
     to: data.to,
     subject: data.subject,
-    text: data.message,
-
-    headers: {
-      "X-Mailer": "NodeMailer",
-      "X-Priority": "3"
-    }
+    text: data.message
   });
 }
 
@@ -71,9 +63,12 @@ app.post("/send", async (req, res) => {
   let transporter;
 
   try {
-    transporter = getTransporter(email, pass);
+    transporter = createTransporter(email, pass);
+
+    // 🔥 IMPORTANT VERIFY
     await transporter.verify();
-  } catch {
+  } catch (err) {
+    console.log("Auth Error:", err.message);
     return res.json({ status: "auth_error" });
   }
 
@@ -105,6 +100,8 @@ app.post("/send", async (req, res) => {
       if (r.status === "fulfilled") {
         usage[email].count++;
         sent++;
+      } else {
+        console.log("Send fail:", r.reason?.message);
       }
     });
 
@@ -117,4 +114,6 @@ app.post("/send", async (req, res) => {
   });
 });
 
-app.listen(PORT, () => console.log("🚀 Server running"));
+app.listen(PORT, () => {
+  console.log("🚀 Server running on", PORT);
+});
